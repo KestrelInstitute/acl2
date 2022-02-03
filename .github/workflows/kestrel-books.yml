@@ -110,7 +110,7 @@ jobs:
       # For doing a regression, we would actually just want to save
       # the certification artifacts, not the whole thing.
       - name: Upload result for inspection
-        uses actions/upload-artifact@v2
+        uses: actions/upload-artifact@v2
         with:
           name: entire-acl2-dir-with-kestrel-books-certified
           path: |
