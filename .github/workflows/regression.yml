@@ -1,0 +1,70 @@
+# 2022-02-02 Eric McCarthy
+# This file currently defines a manually-triggered workflow that you can invoke from GitHub Actions.
+# Currently it only has one job, which runs on ubuntu, uses ccl, builds acl2 and
+# builds the regression books using two cores (the maximum for a GitHub-hosted runner).
+
+name: regression
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch,
+  # but for now this is commented out because we want manual trigger.
+  #push:
+  #  branches: [ master ]
+  #pull_request:
+  #  branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      # Runs a single command using the runners shell
+      - name: Run a one-line script
+        run: echo 'Hello world, pwd=' `pwd` ' $GITHUB_WORKSPACE=' "$GITHUB_WORKSPACE"
+
+      # Note, if we wanted to actually build ccl here, we would not need to do
+      # everything that we do with a Docker build,
+      # because the ubuntu github runner comes already updated and provisioned
+      # with wget, git, build-essential, and m4.
+
+      # However, for just loading ccl, we can use the prebuilt tarball
+      # without the extra git info.
+
+      # Runs a set of commands using the runners shell
+      - name: Run a multi-line script that does an ACL2 regression
+        run: |
+          curl -L -O https://github.com/Clozure/ccl/releases/download/v1.12.1/ccl-1.12.1-linuxx86.tar.gz
+          # wget https://github.com/Clozure/ccl/releases/ccl-1.12.1-linuxx86.tar.gz
+          tar xzf ccl-1.12.1-linuxx86.tar.gz
+          cd ccl
+          export CCL_DEFAULT_DIRECTORY=`pwd`
+          echo -e '(rebuild-ccl :full t)\n(quit)' | ./lx86cl64
+          this_ccl=`pwd`/lx86cl64
+
+          # Now let's build ACL2.
+          cd "${GITHUB_WORKSPACE}"
+          make update LISP="$this_ccl"
+          export ACL2=`pwd`/saved_acl2
+          export ACL2_SYSTEM_BOOKS=`pwd`/books
+          export PATH="${ACL2_SYSTEM_BOOKS}"/build:"${PATH}"
+
+          # Build the regression books
+          cd books
+          make -j2 regression
+
+      - name: look at log
+        if: always()  # show log even if previous failed
+        run: |
+          echo Here is the log:
+          cat make.log
