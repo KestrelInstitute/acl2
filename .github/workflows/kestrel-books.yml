@@ -110,9 +110,11 @@ jobs:
           this_ccl=`pwd`/lx86cl64
           cd "${GITHUB_WORKSPACE}"
           export ACL2=`pwd`/saved_acl2
-          # It appears the upload + download
-          # lost the executable bit.
-          chmod a+x $ACL2
+          # Upload loses the executable bit.  Bug since 2019
+          # https://github.com/actions/upload-artifact/issues/38
+          # Solutions: (1) use cache instead of upload/download, or
+          # (2) tar/upload/download/untar instead of upload/download
+          chmod a+x $ACL2 ccl/lx86cl64
           export ACL2_SYSTEM_BOOKS=`pwd`/books
           export PATH="${ACL2_SYSTEM_BOOKS}"/build:"${PATH}"
           cd books/kestrel
