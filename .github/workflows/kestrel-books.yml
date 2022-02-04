@@ -95,6 +95,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      # Eric M says: this doesn't work, for 1.5 reasons.
+      # (1) because cert.pl looks at write dates, the basic books certs
+      #     created above will look older than the sources checked out here
+      #     (should be fixed but probably a can of worms)
+      # (1.5) maybe (probably?) the checkout could change between checkouts
+      #     It would be better to either tar and upload the whole acl2 dir
+      #     or to use a cache.
       - uses: actions/checkout@v2
 
       - name: Download previously built saved_acl2 and basic books
