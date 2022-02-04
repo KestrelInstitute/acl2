@@ -67,6 +67,8 @@ jobs:
       - name: look at log
         if: always()  # show log even if previous failed
         run: |
+          echo 'Looking around, pwd=' `pwd` ' About to do ls:'
+          ls -la
           echo Here is the log:
           cat make.log
 
@@ -78,7 +80,13 @@ jobs:
             ccl
             saved_acl2
             saved_acl2.lx86cl64
-            books/**/*.{cert,lx64fsl,port,cert.out}
+            # This pattern didn't match anything:
+            # books/**/*.{cert,lx64fsl,port,cert.out}
+            # So try enumerating them:
+            books/**/*.cert
+            books/**/*.lx64fsl
+            books/**/*.port
+            books/**/*.cert.out
           retention-days: 3
 
   # Now build the kestrel books
@@ -96,11 +104,15 @@ jobs:
 
       - name: Certify Kestrel books
         run: |
+
           cd ccl
           export CCL_DEFAULT_DIRECTORY=`pwd`
           this_ccl=`pwd`/lx86cl64
           cd "${GITHUB_WORKSPACE}"
           export ACL2=`pwd`/saved_acl2
+          # It appears the upload + download
+          # lost the executable bit.
+          chmod a+x $ACL2
           export ACL2_SYSTEM_BOOKS=`pwd`/books
           export PATH="${ACL2_SYSTEM_BOOKS}"/build:"${PATH}"
           cd books/kestrel
